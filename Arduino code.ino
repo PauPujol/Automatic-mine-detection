@@ -3,22 +3,22 @@
 SoftwareSerial gps(4,5);
 SoftwareSerial xbee(2,3);
 
-char mode='S';                                                      // Declaració de variables globals
-int pas=0;                                                          // Per contar els 8 passos del periode en modus auto
-int primercop=1;                                                    // Indetifica que al entrar en mode Auto comencem pel pricipi
-int manual=0;                                                        // Serveix per no perdre el mode Manual quan rebem les ordres manuals
-String posicio="";                                                  // Gestió d'strings pel GPS
-char posicio2[68];                                                  // Posició final del GPS
-String posicio3;                                                    // Ultima posició bona llegida del GPS
-unsigned long milisinicials=0;                                      // Per fer les temporitzacions
-long tiradallarga=3000;                                            // deu segons
-long tiradacurta=700;                                              // dos segons
-long tiradagiro=480;                                               // un segons
-unsigned long retard=0;                                             // per contar els 5 segons que habilitarem el GPS
-int retardactiu=0;                                                  // per contar els 5 segons que habilitarem el GPS
-int indicapos=0;                                                    // Quan valgui 1 es que volem llegir el GPS
+char mode='S';                                                      // Declaration of global variables
+int pas=0;                                                          // To count the 8 steps of the period in auto mode
+int primercop=1;                                                    // Identify that when entering Auto mode start at the beginning
+int manual=0;                                                       // It is useful not to lose Manual mode when we receive the manual orders
+String posicio="";                                                  // Management of strings for GPS
+char posicio2[68];                                                  // Final position of the GPS
+String posicio3;                                                    // Last good read position of the GPS
+unsigned long milisinicials=0;                                      // To make the timings
+long tiradallarga=3000;                                             // 3 seconds
+long tiradacurta=700;                                               // 0'7 seconds
+long tiradagiro=480;                                                // 0'48 seconds
+unsigned long retard=0;                                             // To count the 5 seconds we will enable the GPS
+int retardactiu=0;                                                  
+int indicapos=0;                                                    // When it's worth 1, we want to read the GPS
 
-void setup()  {                                                     // Configuració + inicialització variables
+void setup()  {                                                     // Configuration + variable initialization
    Serial.begin(9600);
    while (!Serial) {
    ;
@@ -39,7 +39,7 @@ void setup()  {                                                     // Configura
    xbee.listen();
 }
 
-void endavant() {                                                     // Funció per anar endavant a maxima velocitat
+void endavant() {                                                     // Function to go forward at maximum speed
    analogWrite(10,95);
    analogWrite(11,100);
    digitalWrite(7,HIGH);
@@ -49,7 +49,7 @@ void endavant() {                                                     // Funció
   
 }
 
-void endarrera() {                                                    // Funció per anar endarrera a mitja velocitat
+void endarrera() {                                                    // Function to go back at medium speed
    analogWrite(10,95);
    analogWrite(11,100);
    digitalWrite(7,LOW);
@@ -58,7 +58,7 @@ void endarrera() {                                                    // Funció
    digitalWrite(12,HIGH);
 }
 
-void esquerra() {                                                     // Funció per girar a l'esquerra a mitja velocitat
+void esquerra() {                                                     // Function to turn left at medium speed
    analogWrite(10,190);
    analogWrite(11,200);
    digitalWrite(7,HIGH);
@@ -67,7 +67,7 @@ void esquerra() {                                                     // Funció
    digitalWrite(12,HIGH);
 }
 
-void dreta() {                                                        // Funció per girar a la dreta a mitja velocitat
+void dreta() {                                                        // Function to turn right at medium speed
    analogWrite(10,190);
    analogWrite(11,200);
    digitalWrite(7,LOW);
@@ -76,7 +76,7 @@ void dreta() {                                                        // Funció
    digitalWrite(12,LOW);
 }
 
-void stopmotors() {                                                   // Funció per parar tots els motors
+void stopmotors() {                                                   // Function to stop all engines
    digitalWrite(7,LOW);
    digitalWrite(8,LOW);
    digitalWrite(9,LOW);
@@ -86,51 +86,51 @@ void stopmotors() {                                                   // Funció
 }
 
 
-void loop() {                                                         // Llaç principal del programa
+void loop() {                                                         // Main loop of the program
 char c;
-if (xbee.isListening()) {                                             // Si està habilitat XBEE
-  c = xbee.read();                                                    // llegim un caracter via wifi
-  if ((c>='A') && (c<='z')) {                                         // Només fem cas de les lletres
+if (xbee.isListening()) {                                             // If XBEE is enabled
+  c = xbee.read();                                                    // We read a character via Wi-Fi
+  if ((c>='A') && (c<='z')) {                                         
      // Serial.write(mode);
-     if ((c =='g') || (c=='G')) {                                     // Si rebem G inicarem la posició actual
+     if ((c =='g') || (c=='G')) {                                     // If we receive G, we will indicate the current position
       indicapos=1;
-      } else  {                                                       // En la resta de casos será l'ordre del PC
+      } else  {                                                       // In all other cases it will be the order of the PC
         mode=c;
       }
   } 
 }
 
-if (indicapos==1) {                                                   // Quan indicapos valgui 1 habilitarem el GPS
-  if (retardactiu==0) {                                               // durant 5 segons. Aixo anularà momentaniament
-    xbee.println("....connectant amb GPS");                           // el XBEE
+if (indicapos==1) {                                                   // When indicapos = 1 then we will enable the GPS
+  if (retardactiu==0) {                                               
+    xbee.println("....connecting with GPS");                          
     gps.listen();
     retard=millis();
     retardactiu=1;
-    posicio3="Poscio no trobada, comprovar cobertura GPS";
+    posicio3="Position not found, check GPS coverage";
   }
-  c = gps.read();                                                     // Llegim un caracter dek GPS
-  if (c=='$') gps.readBytesUntil('*', posicio2, 67);                  // Si comença per $ vol dir que tenim una trama OK
+  c = gps.read();                                                     // We read a character of GPS
+  if (c=='$') gps.readBytesUntil('*', posicio2, 67);                  // If it begins with $ it means that we have a plot OK
   posicio=posicio2;
-  if(posicio.substring(0,4) == "GPRM") posicio3=posicio2;             // Només ens interessa les trames que comenceen per GPRM
+  if(posicio.substring(0,4) == "GPRM") posicio3=posicio2;             
   if (millis()-retard > 5000) {
-    xbee.listen();                                                    // Si han passat 5 segons tornem a habilitar la Xbee
+    xbee.listen();                                                    // If we have upgraded the Xbee for 5 seconds
     retardactiu=0;
     indicapos=0;
-    xbee.println(posicio3);                                           // i escribim la posició
+    xbee.println(posicio3);                                           // Print the position
   }
 } 
 
-if (digitalRead(6)) {                                                 // Si hem trobat metall, ho indiquem i parem
+if (digitalRead(6)) {                                                 // If we found metal, we indicated it and stopped
    mode='S';
-   xbee.println("MINA TROBADA");
-   xbee.println("Possible mina detectada");
-   xbee.println("Examinar les coordenada següent");
+   xbee.println("Mine encountered");
+   xbee.println("Possible mine detected");
+   xbee.println("Browse the following coordinates");
    xbee.println("=================================");
 }
 
 if ((mode=='A') || (mode=='a')) {                                     // Modus automatic
   if (primercop==1)  {
-    xbee.println("Iniciant mode automatic");
+    xbee.println("Mode automatic");
     primercop=0;
     manual=0;
     pas=0;
@@ -197,7 +197,7 @@ if ((mode=='A') || (mode=='a')) {                                     // Modus a
 } 
 
 if ((mode=='M') || (mode=='m') || (manual==1))  {                     // Modus manual
-  if (manual==0)  xbee.println("Iniciant mode manual");
+  if (manual==0)  xbee.println("Mode manual");
   manual =1;
   primercop=1;
   if (manual && ((mode=='F') || (mode=='f'))) endavant(); 
